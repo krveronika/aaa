@@ -1,0 +1,114 @@
+-------------- issue-01 --------------
+python -m doctest -v morse.py
+
+Trying:
+    encode(message='SOS') # doctest example
+Expecting:
+    '... --- ...'
+ok
+Trying:
+    encode(message='Русский язык не поддерживается') # doctest: +IGNORE_EXCEPTION_DETAIL
+Expecting:
+    Traceback (most recent call last):
+    KeyError: 'Р'
+ok
+2 items had no tests:
+    morse
+    morse.decode
+1 items passed all tests:
+   2 tests in morse.encode
+2 tests in 3 items.
+2 passed and 0 failed.
+Test passed.
+
+
+-------------- issue-02 --------------
+pytest -v test_morse.py
+=================================================================================================== test session starts ===================================================================================================
+platform darwin -- Python 3.10.6, pytest-7.4.4, pluggy-1.4.0 -- .pyenv/versions/3.10.6/bin/python3.10
+cachedir: .pytest_cache
+rootdir: ./PycharmProjects/aaa/03-instrumenty-testirovaniya-v-python
+plugins: anyio-4.3.0, asyncio-0.21.1, typeguard-4.3.0
+asyncio: mode=strict
+collected 8 items
+
+test_morse.py::TestIssues02::test_decode_ok[.- -... -.-.-ABC] PASSED                                                                                                                                                [ 12%]
+test_morse.py::TestIssues02::test_decode_ok[... --- ...-SOS] PASSED                                                                                                                                                 [ 25%]
+test_morse.py::TestIssues02::test_decode_ok[-- .- .. -....- .--. -.-- - .... --- -. -....- ..--- ----- .---- ----.-MAI-PYTHON-2019] PASSED                                                                          [ 37%]
+test_morse.py::TestIssues02::test_decode_unsupport_symb[1] PASSED                                                                                                                                                   [ 50%]
+test_morse.py::TestIssues02::test_decode_unsupport_symb[a] PASSED                                                                                                                                                   [ 62%]
+test_morse.py::TestIssues02::test_decode_unsupport_symb[#] PASSED                                                                                                                                                   [ 75%]
+test_morse.py::TestIssues02::test_decode_same_size PASSED                                                                                                                                                           [ 87%]
+test_morse.py::TestIssues02_bas_example::test_decode_with_space[.-  -... -.-.-A BC] FAILED                                                                                                                          [100%]
+
+======================================================================================================== FAILURES =========================================================================================================
+___________________________________________________________________________ TestIssues02_bas_example.test_decode_with_space[.-  -... -.-.-A BC] ___________________________________________________________________________
+
+self = <test_morse.TestIssues02_bas_example object at 0x10e4cb610>, input_str = '.-  -... -.-.', expected_output = 'A BC'
+
+    @pytest.mark.parametrize("input_str, expected_output", [(".-  -... -.-.", "A BC")])
+    def test_decode_with_space(self, input_str, expected_output):
+>       assert decode(input_str) == expected_output
+E       AssertionError: assert 'ABC' == 'A BC'
+E         - A BC
+E         ?  -
+E         + ABC
+
+test_morse.py:33: AssertionError
+================================================================================================= short test summary info =================================================================================================
+FAILED test_morse.py::TestIssues02_bas_example::test_decode_with_space[.-  -... -.-.-A BC] - AssertionError: assert 'ABC' == 'A BC'
+=============================================================================================== 1 failed, 7 passed in 0.18s ===============================================================================================
+
+
+-------------- issue-03 --------------
+python -m unittest -v test_one_hot_encoder_03.py
+
+test_duplicate_values (test_one_hot_encoder_03.TestOneHotEncoder) ... ok
+test_empty_list (test_one_hot_encoder_03.TestOneHotEncoder) ... ok
+test_keys (test_one_hot_encoder_03.TestOneHotEncoder) ... ok
+test_one_value (test_one_hot_encoder_03.TestOneHotEncoder) ... ok
+test_type_error_on_empty_input (test_one_hot_encoder_03.TestOneHotEncoder) ... ok
+test_type_error_on_int_arg (test_one_hot_encoder_03.TestOneHotEncoder) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.000s
+
+OK
+
+-------------- issue-04 --------------
+pytest -v test_one_hot_encoder_04.py::TestOneHotEncoder
+
+=================================================================================================== test session starts ===================================================================================================
+platform darwin -- Python 3.10.6, pytest-7.4.4, pluggy-1.4.0 -- .pyenv/versions/3.10.6/bin/python3.10
+cachedir: .pytest_cache
+rootdir: ./PycharmProjects/aaa/03-instrumenty-testirovaniya-v-python
+plugins: anyio-4.3.0, asyncio-0.21.1, typeguard-4.3.0
+asyncio: mode=strict
+collected 5 items
+
+test_one_hot_encoder_04.py::TestOneHotEncoder::test_fit_transform_with_simple_data[input_val0-expected_vals0] PASSED                                                                                                [ 20%]
+test_one_hot_encoder_04.py::TestOneHotEncoder::test_fit_transform_with_simple_data[input_val1-expected_vals1] PASSED                                                                                                [ 40%]
+test_one_hot_encoder_04.py::TestOneHotEncoder::test_fit_transform_with_simple_data[input_val2-expected_vals2] PASSED                                                                                                [ 60%]
+test_one_hot_encoder_04.py::TestOneHotEncoder::test_raises_type_error_on_empty_input PASSED                                                                                                                         [ 80%]
+test_one_hot_encoder_04.py::TestOneHotEncoder::test_type_error_on_int_arg PASSED                                                                                                                                    [100%]
+
+==================================================================================================== 5 passed in 0.02s ====================================================================================================
+
+
+-------------- issue-05 --------------
+pytest -v test_what_is_year_now.py
+
+=================================================================================================== test session starts ===================================================================================================
+platform darwin -- Python 3.10.6, pytest-7.4.4, pluggy-1.4.0 -- .pyenv/versions/3.10.6/bin/python3.10
+cachedir: .pytest_cache
+rootdir: ./PycharmProjects/aaa/03-instrumenty-testirovaniya-v-python
+plugins: anyio-4.3.0, asyncio-0.21.1, typeguard-4.3.0
+asyncio: mode=strict
+collected 3 items
+
+test_what_is_year_now.py::TestWhatIsYearNow::test_ymd_format PASSED                                                                                                                                                 [ 33%]
+test_what_is_year_now.py::TestWhatIsYearNow::test_dmy_format PASSED                                                                                                                                                 [ 66%]
+test_what_is_year_now.py::TestWhatIsYearNow::test_invalid_format PASSED                                                                                                                                             [100%]
+
+==================================================================================================== 3 passed in 0.05s ====================================================================================================
+
