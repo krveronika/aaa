@@ -1,23 +1,32 @@
+from numpy import log
+
+
 class SparceMatrix:
     def __init__(self):
         """ключ - tuple(irow, icol), значение - число повторений"""
         self.data = dict()
 
     def update(self, ir, ic):
-        if (ir, ic) in self.data:
-            self.data[(ir, ic)] += 1
-        else:
-            self.data[(ir, ic)] = 1
+        self.data.setdefault((ir, ic), 0)
+        self.data[(ir, ic)] += 1
 
     def to_array(self) -> list[list[str]]:
         """Преобразует разреженную матрицу в плотную"""
-        max_row = max(row for row, _ in self.data.keys()) + 1
-        max_col = max(col for _, col in self.data.keys()) + 1
+        max_row = self.get_count_rows()
+        max_col = self.get_count_cols()
         dense_matrix = [[0] * max_col for _ in range(max_row)]
 
         for (row, col), value in self.data.items():
             dense_matrix[row][col] = value
         return dense_matrix
+
+    def get_count_rows(self) -> int:
+        """Кол-во строк в dense"""
+        return max(row for row, _ in self.data.keys()) + 1
+
+    def get_count_cols(self) -> int:
+        """Кол-во столбцов в dense"""
+        return max(col for _, col in self.data.keys()) + 1
 
 
 class CountVectorizer:
@@ -49,56 +58,46 @@ class TfidfTransformer:
     """
 
     @staticmethod
-    def tf_transform(sparse_coo_matrix: sparse.spmatrix) -> sparse.spmatrix:
+    def tf_transform(sparse_coo_matrix: SparceMatrix) -> SparceMatrix:
         """
         Расчет term frequency (задание 2)
         """
-        sparse_size = sparse_coo_matrix.size
-        rows = [0] * sparse_size
-        cols = [0] * sparse_size
-        tfs = [0] * sparse_size
-        sum_words = {}
-        for irow, val in zip(sparse_coo_matrix.row, sparse_coo_matrix.data):
-            sum_words.setdefault(irow, 0)
-            sum_words[irow] += val
+        tfs = SparceMatrix()
+        sum_words = dict()
+        for (row, col), value in sparse_coo_matrix.data.items():
+            sum_words.setdefault(row, 0)
+            sum_words[row] += value
 
-        zip_data = zip(
-            sparse_coo_matrix.row, sparse_coo_matrix.col, sparse_coo_matrix.data
-        )
-        for i, (ir, ic, val) in enumerate(zip_data):
-            rows[i] = ir
-            cols[i] = ic
-            tfs[i] = round(val / sum_words[ir], 3)
-        return sparse.coo_matrix((tfs, (rows, cols)))
+        for (row, col), value in sparse_coo_matrix.data.items():
+            tfs.data[(row, col)] = round(value / sum_words[row], 3)
+        return tfs
 
     @staticmethod
-    def idf_transform(sparse_coo_matrix: sparse.spmatrix) -> list[float]:
+    def idf_transform(sparse_coo_matrix: SparceMatrix) -> list[float]:
         """
         Расчет inverse document-frequency (задание 3)
         """
-        doc_count, words_count = sparse_coo_matrix.shape
-        doc_count += 1
+        doc_count = sparse_coo_matrix.get_count_rows()
+        words_count = sparse_coo_matrix.get_count_cols()
+        doc_count_pl_1 = 1 + doc_count
         sum_doc_words = {}
-        for icol in sparse_coo_matrix.col:
-            sum_doc_words.setdefault(icol, 1)
-            sum_doc_words[icol] += 1
+        for _, col in sparse_coo_matrix.data.keys():
+            sum_doc_words.setdefault(col, 1)
+            sum_doc_words[col] += 1
         idf = [
-            round(1 + log(doc_count / sum_doc_words[i]), 3) for i in range(words_count)
+            round(1 + log(doc_count_pl_1 / sum_doc_words[i]), 3)
+            for i in range(words_count)
         ]
         return idf
 
-    def fit_transform(self, sparse_coo_matrix: sparse.spmatrix) -> sparse.spmatrix:
-        sparse_size = sparse_coo_matrix.size
-        rows = [0] * sparse_size
-        cols = [0] * sparse_size
-        tfidf = [0] * sparse_size
-        tf_matrix: sparse.spmatrix = self.tf_transform(sparse_coo_matrix)
+    def fit_transform(self, sparse_coo_matrix: SparceMatrix) -> SparceMatrix:
+        tfidf = SparceMatrix()
+        tf_matrix: SparceMatrix = self.tf_transform(sparse_coo_matrix)
         idf_values: list[float] = self.idf_transform(sparse_coo_matrix)
-        zip_data = zip(tf_matrix.row, tf_matrix.col, tf_matrix.data)
-        for i, (irow, icol, tf) in enumerate(zip_data):
-            rows[i], cols[i] = irow, icol
-            tfidf[i] = round(tf * idf_values[icol], 3)
-        self._sparse_matrix = sparse.coo_matrix((tfidf, (rows, cols)))
+
+        for (row, col), tf in tf_matrix.data.items():
+            tfidf.data[(row, col)] = round(tf * idf_values[col], 3)
+        self._sparse_matrix = tfidf
         return self._sparse_matrix
 
 
@@ -123,6 +122,9 @@ if __name__ == "__main__":
     ]
 
     count_vectorizer = CountVectorizer()
+    print(count_vectorizer.fit_transform(corpus).to_array())
+    print(count_vectorizer.get_feature_names())
+
     tfidf_vectorizer = TfidfVectorizer()
-    print(tfidf_vectorizer.fit_transform(corpus).toarray())
+    print(tfidf_vectorizer.fit_transform(corpus).to_array())
     print(tfidf_vectorizer.get_feature_names())
