@@ -3,11 +3,10 @@ class SparceMatrix:
         """ключ - tuple(irow, icol), значение - число повторений"""
         self.data = dict()
 
-    def update(self, ir, ic):
-        if (ir, ic) in self.data:
-            self.data[(ir, ic)] += 1
-        else:
-            self.data[(ir, ic)] = 1
+    def update(self, ir, ic) -> None:
+        """увеличиваем счетчик"""
+        self.data.setdefault((ir, ic), 0)
+        self.data[(ir, ic)] += 1
 
     def to_array(self) -> list[list[str]]:
         """Преобразует разреженную матрицу в плотную"""
