@@ -1,42 +1,46 @@
-import scipy.sparse as sparse
-from numpy import log
+class SparceMatrix:
+    def __init__(self):
+        """ключ - tuple(irow, icol), значение - число повторений"""
+        self.data = dict()
+
+    def update(self, ir, ic):
+        if (ir, ic) in self.data:
+            self.data[(ir, ic)] += 1
+        else:
+            self.data[(ir, ic)] = 1
+
+    def to_array(self) -> list[list[str]]:
+        """Преобразует разреженную матрицу в плотную"""
+        max_row = max(row for row, _ in self.data.keys()) + 1
+        max_col = max(col for _, col in self.data.keys()) + 1
+        dense_matrix = [[0] * max_col for _ in range(max_row)]
+
+        for (row, col), value in self.data.items():
+            dense_matrix[row][col] = value
+        return dense_matrix
 
 
 class CountVectorizer:
     def __init__(self, splitter: str = " ", is_lower: bool = True):
         self.splitter = splitter
         self.is_lower = is_lower
+        self._vocab: dict = dict()
+        self._sparce_matrix = SparceMatrix()
 
-    def _create_vocab(self, X: list[str]) -> None:
-        """
-        Создание отсортированного по ключу словаря. Ключ - уникальное слово
-        """
-        set_words = set()
-        for text in X:
-            text = text.lower() if self.is_lower else text
-            set_words.update(text.split(self.splitter))
-        sorted_words = sorted(list(set_words))
-        self._vocab: dict = {w: i for i, w in enumerate(sorted_words)}
-
-    def fit_transform(self, X: list[str]) -> sparse.spmatrix:
-        self._create_vocab(X)
-        rows = []
-        cols = []
-        count_word = []
-
+    def fit_transform(self, X: list[str]) -> SparceMatrix:
+        ic = -1
         for ir, text in enumerate(X):
             text = text.lower() if self.is_lower else text
-            set_words = set(text.split(self.splitter))
-            rows = rows + [ir] * len(set_words)
-            for word in set(text.split(self.splitter)):
-                cols.append(self._vocab[word])
-                count_word.append(text.count(word))
+            words = text.split(self.splitter)
+            for word in words:
+                if word not in self._vocab:
+                    ic += 1
+                    self._vocab[word] = ic
+                self._sparce_matrix.update(ir, self._vocab[word])
+        return self._sparce_matrix
 
-        self._sparse_matrix = sparse.coo_matrix((count_word, (rows, cols)))
-        return self._sparse_matrix
-
-    def get_feature_names(self) -> list[str]:
-        return self._vocab.keys()
+    def get_feature_names(self) -> list:
+        return list(self._vocab.keys())
 
 
 class TfidfTransformer:
